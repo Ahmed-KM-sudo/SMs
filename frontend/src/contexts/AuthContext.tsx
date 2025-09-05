@@ -1,31 +1,24 @@
-import {
-  createContext,
-  useState,
-  useEffect,
-  ReactNode,
-  useCallback,
-} from "react";
-import { setToken, getToken, removeToken, apiService } from "../services/api";
-import { toast } from "react-hot-toast";
+import { createContext, useState, useEffect, ReactNode } from 'react';
+import api from '../services/api';
 
 interface User {
-  id: string;
+  id: number;
   email: string;
   full_name: string;
-  role: "admin" | "manager" | "agent";
+  is_active: boolean;
+  role: 'admin' | 'agent';
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
+  token: string | null;
   login: (token: string) => Promise<void>;
   logout: () => void;
-  isLoading: boolean;
+  loading: boolean;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -33,53 +26,58 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  const fetchUser = useCallback(async () => {
-    try {
-      const { data: user } = await apiService.get<User>("/users/me");
-      setUser(user);
-      setIsAuthenticated(true);
-    } catch (error) {
-      removeToken();
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    if (token) {
-      setToken(token); // Set token in api headers
-      fetchUser();
-    } else {
-      setIsLoading(false);
-    }
-  }, [fetchUser]);
+    const validateToken = async () => {
+      if (token) {
+        try {
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          const response = await api.get('/users/me');
+          setUser(response.data);
+        } catch (error) {
+          console.error('Invalid token', error);
+          logout();
+        }
+      }
+      setLoading(false);
+    };
+    validateToken();
+  }, [token]);
 
-  const login = async (token: string) => {
-    setIsLoading(true);
-    setToken(token);
-    await fetchUser();
-    toast.success("Logged in successfully");
+  const login = async (newToken: string) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+    api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    try {
+      const response = await api.get('/users/me');
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user', error);
+      logout();
+    }
   };
 
   const logout = () => {
-    removeToken();
+    localStorage.removeItem('token');
+    setToken(null);
     setUser(null);
-    setIsAuthenticated(false);
-    toast.success("Logged out successfully");
-    window.location.href = "/login";
+    delete api.defaults.headers.common['Authorization'];
+  };
+
+  const authContextValue: AuthContextType = {
+    isAuthenticated: !!token,
+    user,
+    token,
+    login,
+    logout,
+    loading,
   };
 
   return (
-    <AuthContext.Provider
-      value={{ isAuthenticated, user, login, logout, isLoading }}
-    >
-      {children}
+    <AuthContext.Provider value={authContextValue}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

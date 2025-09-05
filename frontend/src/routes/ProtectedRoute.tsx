@@ -1,15 +1,15 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 interface ProtectedRouteProps {
   allowedRoles?: string[];
 }
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
 
-  if (isLoading) {
-    // You can show a loading spinner here
+  if (loading) {
+    // You can add a loading spinner here
     return <div>Loading...</div>;
   }
 
@@ -18,7 +18,7 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    // Redirect to an unauthorized page or dashboard
+    // Redirect to a "not authorized" page or back to dashboard
     return <Navigate to="/dashboard" replace />;
   }
 

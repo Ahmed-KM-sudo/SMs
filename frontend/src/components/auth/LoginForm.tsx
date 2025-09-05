@@ -1,137 +1,124 @@
-import { useForm } from "react-hook-form";
-import { useAuth } from "../../hooks/useAuth";
-import { apiService } from "../../services/api";
-import { toast } from "react-hot-toast";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useAuth } from '../../hooks/useAuth';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import api from '../../services/api';
 
 const loginSchema = z.object({
-  username: z.string().min(1, { message: "Username is required" }),
-  password: z.string().min(1, { message: "Password is required" }),
+  email: z.string().email({ message: 'Invalid email address' }),
+  password: z.string().min(1, { message: 'Password is required' }),
   rememberMe: z.boolean().optional(),
 });
 
-type LoginFormInputs = z.infer<typeof loginSchema>;
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginForm = () => {
   const { login } = useAuth();
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormInputs>({
+  } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false,
+    },
   });
 
-  const onSubmit = async (data: LoginFormInputs) => {
-    setIsLoading(true);
+  const onSubmit = async (data: LoginFormValues) => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await apiService.post<{ access_token: string }>(
-        "/auth/login",
-        {
-          username: data.email,
-          password: data.password,
-        }
-      );
-      await login(response.data.access_token);
-      navigate("/dashboard");
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Failed to login");
+      const response = await api.post('/auth/token', new URLSearchParams({
+        username: data.email,
+        password: data.password,
+      }));
+
+      const { access_token } = response.data;
+      await login(access_token);
+      toast.success('Logged in successfully!');
+      // The redirect will be handled by the router
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || 'An unknown error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div>
-        <label
-          htmlFor="username"
-          className="block text-sm font-medium leading-6 text-gray-900"
-        >
-          Username
-        </label>
-        <div className="mt-2">
-          <input
-            id="username"
-            type="text"
-            autoComplete="username"
-            required
-            {...register("username")}
-            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-          />
-          {errors.username && (
-            <p className="mt-2 text-sm text-red-600">{errors.username.message}</p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between">
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Password
+    <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold text-center text-gray-900">Sign in to your account</h1>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email address
           </label>
-          <div className="text-sm">
-            <a
-              href="#"
-              className="font-semibold text-indigo-600 hover:text-indigo-500"
-            >
-              Forgot password?
-            </a>
+          <div className="mt-1">
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              {...register('email')}
+              className="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+            {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
           </div>
         </div>
-        <div className="mt-2">
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            {...register("password")}
-            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-          />
-          {errors.password && (
-            <p className="mt-2 text-sm text-red-600">
-              {errors.password.message}
-            </p>
-          )}
-        </div>
-      </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <input
-            id="remember-me"
-            {...register("rememberMe")}
-            type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-          />
-          <label
-            htmlFor="remember-me"
-            className="ml-3 block text-sm leading-6 text-gray-900"
-          >
-            Remember me
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Password
           </label>
+          <div className="mt-1">
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              {...register('password')}
+              className="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+            {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
+          </div>
         </div>
-      </div>
 
-      <div>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
-        >
-          {isLoading ? "Signing in..." : "Sign in"}
-        </button>
-      </div>
-    </form>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <input
+              id="rememberMe"
+              type="checkbox"
+              {...register('rememberMe')}
+              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+            />
+            <label htmlFor="rememberMe" className="block ml-2 text-sm text-gray-900">
+              Remember me
+            </label>
+          </div>
+        </div>
+
+        {error && <p className="text-sm text-center text-red-600">{error}</p>}
+
+        <div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          >
+            {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
+            Sign in
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 
