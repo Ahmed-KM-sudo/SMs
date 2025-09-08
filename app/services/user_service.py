@@ -7,6 +7,9 @@ from app.services.audit_service import AuditService
 def create_user(db: Session, user: UserCreate, current_admin: Agent):
     user_data = user.model_dump()
     hashed_password = get_password_hash(user_data.pop("password"))
+    # Ensure role is lowercase
+    if 'role' in user_data:
+        user_data['role'] = user_data['role'].lower()
     db_user = Agent(**user_data, mot_de_passe=hashed_password)
     db.add(db_user)
     db.commit()

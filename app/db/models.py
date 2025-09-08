@@ -22,6 +22,12 @@ liste_contacts = Table('liste_contacts', Base.metadata,
     Column('added_at', TIMESTAMP, default=func.now())
 )
 
+contact_list_contacts = Table('contact_list_contacts', Base.metadata,
+    Column('id_contact_list', Integer, ForeignKey('contact_lists.id_contact_list'), primary_key=True),
+    Column('id_contact', Integer, ForeignKey('contacts.id_contact'), primary_key=True),
+    Column('added_at', TIMESTAMP, default=func.now())
+)
+
 class Agent(Base):
     __tablename__ = 'agents'
     id_agent = Column(Integer, primary_key=True)
@@ -95,6 +101,7 @@ class Contact(Base):
     updated_at = Column(TIMESTAMP, default=func.now(), onupdate=func.now())
 
     mailing_lists = relationship("MailingList", secondary=liste_contacts, back_populates="contacts")
+    contact_lists = relationship("ContactList", secondary=contact_list_contacts, back_populates="contacts")
     messages = relationship("Message", back_populates="contact")
 
 class MailingList(Base):
@@ -102,7 +109,7 @@ class MailingList(Base):
     id_liste = Column(Integer, primary_key=True)
     nom_liste = Column(String(100), nullable=False)
     description = Column(TEXT)
-    id_campagne = Column(Integer, ForeignKey('campagnes.id_campagne'), nullable=False)
+    id_campagne = Column(Integer, ForeignKey('campagnes.id_campagne'), nullable=True)
     created_at = Column(TIMESTAMP, default=func.now())
     deleted_at = Column(TIMESTAMP, nullable=True)
 
@@ -177,3 +184,14 @@ class ActivityLog(Base):
     timestamp = Column(TIMESTAMP, default=func.now())
 
     user = relationship("Agent", back_populates="activity_logs")
+
+class ContactList(Base):
+    __tablename__ = 'contact_lists'
+    id_contact_list = Column(Integer, primary_key=True)
+    nom_liste = Column(String(100), nullable=False)
+    type_client = Column(String(50), nullable=False)
+    zone_geographique = Column(String(100), nullable=False)
+    created_at = Column(TIMESTAMP, default=func.now())
+    deleted_at = Column(TIMESTAMP, nullable=True)
+
+    contacts = relationship("Contact", secondary=contact_list_contacts, back_populates="contact_lists")

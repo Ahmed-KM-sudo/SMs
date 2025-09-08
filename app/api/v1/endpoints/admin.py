@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.v1.schemas import user as user_schema
+from app.api.v1.schemas.audit import ActivityLog
 from app.services import user_service, audit_service
 from app.db.session import get_db
-from app.db.models import Agent, ActivityLog
+from app.db.models import Agent
 from app.core.security import get_current_active_admin
 
 router = APIRouter()

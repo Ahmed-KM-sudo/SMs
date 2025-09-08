@@ -39,3 +39,6 @@ def setup_logging():
     handler.setFormatter(formatter)
 
     logger.addHandler(handler)
+    
+    # Suppress the specific bcrypt warning from passlib
+    logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR)

@@ -29,22 +29,26 @@ from fastapi import Query
 def read_contacts(
     skip: int = 0,
     limit: int = 100,
-    segments: str = Query(None, description="Comma-separated list of segments to filter by"),
+    search: str = Query(None, description="Search by name, email, or phone number"),
+    type_client: str = Query(None, description="Filter by contact type"),
     zone_geographique: str = None,
+    segments: str = Query(None, description="Comma-separated list of segments to filter by"),
     statut_opt_in: bool = None,
     db: Session = Depends(get_db),
     current_user: Agent = Depends(get_current_user),
 ):
     """
-    Retrieve contacts with optional filtering.
+    Retrieve contacts with optional filtering and search.
     """
     filters = {
+        "search": search,
+        "type_client": type_client,
         "segments": segments.split(',') if segments else [],
         "zone_geographique": zone_geographique,
         "statut_opt_in": statut_opt_in,
     }
     # Remove None values so we don't filter by them
-    active_filters = {k: v for k, v in filters.items() if v is not None}
+    active_filters = {k: v for k, v in filters.items() if v is not None and v != []}
 
     contacts = contact_service.get_contacts(db, filters=active_filters, skip=skip, limit=limit)
     return contacts

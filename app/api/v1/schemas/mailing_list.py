@@ -14,15 +14,16 @@ class MailingListBase(BaseModel):
     description: Optional[str] = None
 
 class MailingListCreate(MailingListBase):
-    id_campagne: int
+    id_campagne: Optional[int] = None
 
 class MailingListUpdate(BaseModel):
     nom_liste: Optional[str] = None
     description: Optional[str] = None
+    id_campagne: Optional[int] = None
 
 class MailingList(MailingListBase):
     id_liste: int
-    id_campagne: int
+    id_campagne: Optional[int] = None
     contacts: List[Contact] = []
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)

@@ -1,0 +1,5 @@
+FirstName,LastName,PhoneNumber,Email,OptInStatus,Segment,Zone,ClientType
+John,Doe,+1234567890,john.doe@example.com,true,Premium,North,Individual
+Jane,Smith,+0987654321,jane.smith@example.com,true,Standard,South,Business
+Mike,Johnson,+1122334455,mike.johnson@example.com,false,Basic,East,Individual
+Sarah,Williams,+5566778899,sarah.williams@example.com,true,Premium,West,Business
