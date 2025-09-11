@@ -8,7 +8,7 @@ os.environ['PYTHONWARNINGS'] = 'ignore::UserWarning:passlib'
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1.endpoints import auth, campaigns, contacts, templates, messages, reports, users, webhooks, mailing_lists, contact_lists, tasks, analytics, admin, health
+from app.api.v1.endpoints import auth, campaigns, contacts, templates, messages, reports, users, webhooks, mailing_lists, contact_lists, tasks, analytics, admin, health, queue
 from app.core.logging import setup_logging
 from app.core.monitoring import get_application_health
 from app.core.config import settings
@@ -39,6 +39,7 @@ app.include_router(contact_lists.router, prefix="/api/v1/contact-lists", tags=["
 app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["tasks"])
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
+app.include_router(queue.router, prefix="/api/v1/queue", tags=["queue"])
 app.include_router(health.router, prefix="/health", tags=["health"])
 
 @app.get("/health", tags=["monitoring"])

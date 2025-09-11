@@ -23,5 +23,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379"
     MAX_FILE_SIZE: int = 10485760
     UPLOAD_DIRECTORY: str = "./uploads"
+    
+    # Phone number settings
+    DEFAULT_COUNTRY_CODE: str = "FR"  # Default country for phone number validation
 
 settings = Settings()

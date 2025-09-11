@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from app.db.models import Campaign, Contact, SMSQueue
 from app.utils.phone_validator import validate_and_format_phone_number, InvalidPhoneNumberError
+from app.core.config import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -51,7 +52,16 @@ class CampaignExecutionService:
                     continue
 
                 try:
-                    validate_and_format_phone_number(contact.numero_telephone)
+                    # Get country code with fallback to ensure we always have a valid value
+                    country_code = getattr(settings, 'DEFAULT_COUNTRY_CODE', 'FR')
+                    if not country_code:
+                        country_code = 'FR'  # Fallback to France if setting is empty
+                    
+                    logger.debug(f"Validating phone number {contact.numero_telephone} with country code: {country_code}")
+                    
+                    validated_phone = validate_and_format_phone_number(contact.numero_telephone, country_code)
+                    logger.debug(f"Phone validation successful: {contact.numero_telephone} -> {validated_phone}")
+                    
                     personalized_content = self._personalize_message(message_template, contact)
                     new_queue_item = SMSQueue(
                         campaign_id=campaign.id_campagne,

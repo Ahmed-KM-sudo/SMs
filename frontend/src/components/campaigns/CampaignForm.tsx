@@ -6,13 +6,9 @@ import * as z from 'zod';
 // Schema for the campaign form based on backend model
 const campaignSchema = z.object({
   nom_campagne: z.string().min(3, 'Campaign name must be at least 3 characters'),
-fix/campaign-wizard-bug
-  type_campagne: z.enum(['promotional', 'informational', 'follow_up']),
-
   type_campagne: z.enum(['promotional', 'informational', 'follow_up'], {
     errorMap: () => ({ message: 'Please select a valid campaign type' })
   }),
- master
   date_debut: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid start date' }),
   date_fin: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid end date' }),
 }).refine(data => new Date(data.date_fin) > new Date(data.date_debut), {
@@ -57,16 +53,11 @@ const CampaignForm: React.FC<CampaignFormProps> = ({ onSubmit, defaultValues, is
           id="type_campagne"
           {...register('type_campagne')}
           className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-         fix/campaign-wizard-bug
-          <option value="">Select a type</option>
-          <option value="promotional">Promotional</option>
-          <option value="informational">Informational</option>
-          <option value="follow_up">Follow-up</option>
-          
+        >
           <option value="">Select campaign type</option>
           <option value="promotional">Promotional</option>
           <option value="informational">Informational</option>
-          <option value="follow_up">Follow Up</option>master
+          <option value="follow_up">Follow Up</option>
         </select>
         {errors.type_campagne && <p className="mt-1 text-sm text-red-500">{errors.type_campagne.message}</p>}
       </div>

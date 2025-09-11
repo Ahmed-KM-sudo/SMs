@@ -122,19 +122,45 @@ class Message(Base):
     id_message = Column(Integer, primary_key=True)
     contenu = Column(TEXT, nullable=False)
     date_envoi = Column(TIMESTAMP, nullable=False)
-    statut_livraison = Column(String(50), CheckConstraint("statut_livraison IN ('pending', 'sent', 'delivered', 'failed', 'bounced')"), nullable=False)
+    statut_livraison = Column(String(50), CheckConstraint("statut_livraison IN ('pending', 'sent', 'delivered', 'failed', 'bounced', 'cancelled')"), nullable=False)
     identifiant_expediteur = Column(String(100), nullable=False)
     external_message_id = Column(String(255))
     error_message = Column(TEXT)
     cost = Column(DECIMAL(10, 4))
+    delivery_attempts = Column(Integer, default=0)
+    final_status = Column(String(50))  # Final delivery status from provider
+    delivery_timestamp = Column(TIMESTAMP)  # When message was actually delivered
     id_liste = Column(Integer, ForeignKey('mailing_lists.id_liste'), nullable=False)
     id_contact = Column(Integer, ForeignKey('contacts.id_contact'), nullable=False)
     id_campagne = Column(Integer, ForeignKey('campagnes.id_campagne'), nullable=False)
+    queue_item_id = Column(Integer, ForeignKey('sms_queue.id'), nullable=True)  # Link to queue item
     created_at = Column(TIMESTAMP, default=func.now())
+    updated_at = Column(TIMESTAMP, default=func.now(), onupdate=func.now())
 
     mailing_list = relationship("MailingList", back_populates="messages")
     contact = relationship("Contact", back_populates="messages")
     campaign = relationship("Campaign", back_populates="messages")
+    message_logs = relationship("MessageLog", back_populates="message")
+
+
+class MessageLog(Base):
+    __tablename__ = 'message_logs'
+    
+    id = Column(Integer, primary_key=True)
+    message_id = Column(Integer, ForeignKey('messages.id_message'), nullable=False)
+    queue_item_id = Column(Integer, ForeignKey('sms_queue.id'), nullable=True)
+    status = Column(String(50), nullable=False)  # pending, processing, sent, delivered, failed, etc.
+    provider_status = Column(String(50))  # Raw status from SMS provider
+    provider_response = Column(JSON)  # Full response from provider
+    error_code = Column(String(50))
+    error_message = Column(TEXT)
+    attempt_number = Column(Integer, default=1)
+    external_message_id = Column(String(255))  # Provider message ID
+    cost = Column(DECIMAL(10, 4))
+    processing_duration = Column(Integer)  # Time taken to process in milliseconds
+    created_at = Column(TIMESTAMP, default=func.now())
+    
+    message = relationship("Message", back_populates="message_logs")
 
 class CampaignReport(Base):
     __tablename__ = 'campaign_reports'
@@ -161,11 +187,16 @@ class SMSQueue(Base):
     contact_id = Column(Integer, ForeignKey('contacts.id_contact'), nullable=False)
     message_content = Column(TEXT, nullable=False)
     scheduled_at = Column(TIMESTAMP, nullable=False)
-    status = Column(String(20), CheckConstraint("status IN ('pending', 'processing', 'sent', 'failed')"), default='pending')
+    status = Column(String(20), CheckConstraint("status IN ('pending', 'processing', 'sent', 'failed', 'cancelled')"), default='pending')
     attempts = Column(Integer, default=0)
+    max_attempts = Column(Integer, default=3)
     error_message = Column(TEXT)
+    external_message_id = Column(String(255))  # Twilio SID or other provider ID
+    priority = Column(Integer, default=5)  # 1 = highest, 10 = lowest
     created_at = Column(TIMESTAMP, default=func.now())
     processed_at = Column(TIMESTAMP)
+    last_attempt_at = Column(TIMESTAMP)
+    next_retry_at = Column(TIMESTAMP)
 
     campaign = relationship("Campaign")
     contact = relationship("Contact")

@@ -1,43 +1,51 @@
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
-import { TrendingUp, TrendingDown, Activity, BarChart3, PieChart as PieChartIcon, TrendingUpIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, BarChart3, PieChart as PieChartIcon, TrendingUpIcon, RefreshCw } from 'lucide-react';
+import { usePerformanceAnalytics } from '../../hooks/usePerformanceAnalytics';
 
 interface PerformanceChartsProps {
-  deliveryRate: number;
-  totalDelivered: number;
-  totalFailed: number;
+  deliveryRate?: number;
+  totalDelivered?: number;
+  totalFailed?: number;
 }
 
 const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ 
-  deliveryRate, 
-  totalDelivered, 
-  totalFailed 
+  deliveryRate: propDeliveryRate, 
+  totalDelivered: propTotalDelivered, 
+  totalFailed: propTotalFailed 
 }) => {
   const [activeChart, setActiveChart] = useState<'delivery' | 'trend' | 'volume'>('delivery');
+  
+  // Fetch real analytics data
+  const { data: analyticsData, isLoading, error, refetch } = usePerformanceAnalytics(30);
+  
+  // Use analytics data if available, otherwise fall back to props
+  const deliveryRate = analyticsData?.delivery_rate ?? propDeliveryRate ?? 0;
+  const totalDelivered = analyticsData?.total_delivered ?? propTotalDelivered ?? 0;
+  const totalFailed = analyticsData?.total_failed ?? propTotalFailed ?? 0;
 
-  // Sample data for different chart types
+  // Use real data from API
   const deliveryData = [
     { name: 'Delivered', value: totalDelivered, fill: '#10B981' },
     { name: 'Failed', value: totalFailed, fill: '#EF4444' },
   ];
 
-  const trendData = [
-    { name: 'Jan', delivered: 2400, failed: 240 },
-    { name: 'Feb', delivered: 1398, failed: 139 },
-    { name: 'Mar', delivered: 9800, failed: 490 },
-    { name: 'Apr', delivered: 3908, failed: 195 },
-    { name: 'May', delivered: 4800, failed: 240 },
-    { name: 'Jun', delivered: 3800, failed: 190 },
-    { name: 'Jul', delivered: 4300, failed: 215 },
+  const trendData = analyticsData?.monthly_trends || [
+    { month: 'Jan', delivered: 0, failed: 0 },
+    { month: 'Feb', delivered: 0, failed: 0 },
+    { month: 'Mar', delivered: 0, failed: 0 },
+    { month: 'Apr', delivered: 0, failed: 0 },
+    { month: 'May', delivered: 0, failed: 0 },
+    { month: 'Jun', delivered: 0, failed: 0 },
   ];
 
-  const volumeData = [
-    { time: '00:00', volume: 120 },
-    { time: '04:00', volume: 80 },
-    { time: '08:00', volume: 340 },
-    { time: '12:00', volume: 560 },
-    { time: '16:00', volume: 450 },
-    { time: '20:00', volume: 280 },
+  const volumeData = analyticsData?.hourly_volumes || [
+    { time: '00:00', volume: 0 },
+    { time: '04:00', volume: 0 },
+    { time: '08:00', volume: 0 },
+    { time: '12:00', volume: 0 },
+    { time: '16:00', volume: 0 },
+    { time: '20:00', volume: 0 },
   ];
 
   const chartTabs = [
@@ -96,7 +104,7 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="name" stroke="#6B7280" />
+                <XAxis dataKey="month" stroke="#6B7280" />
                 <YAxis stroke="#6B7280" />
                 <Tooltip 
                   formatter={(value, name) => [value.toLocaleString(), name === 'delivered' ? 'Delivered' : 'Failed']}
@@ -159,36 +167,79 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Interactive charts showing campaign performance metrics
+              {analyticsData && (
+                <span className="ml-2 text-green-600 dark:text-green-400">
+                  • Live data
+                </span>
+              )}
             </p>
           </div>
           
-          {/* Chart Type Selector */}
-          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-            {chartTabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeChart === tab.id;
-              
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveChart(tab.id)}
-                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? `${tab.color} dark:text-white dark:bg-gray-600`
-                      : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-600'
-                  }`}
-                >
-                  <Icon className="h-4 w-4 mr-2" />
-                  {tab.label}
-                </button>
-              );
-            })}
+          <div className="flex items-center space-x-3">
+            {/* Refresh Button */}
+            <button
+              onClick={() => refetch()}
+              disabled={isLoading}
+              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors disabled:opacity-50"
+              title="Refresh data"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+            
+            {/* Chart Type Selector */}
+            <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+              {chartTabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeChart === tab.id;
+                
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveChart(tab.id)}
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      isActive
+                        ? `${tab.color} dark:text-white dark:bg-gray-600`
+                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-white dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
         {/* Chart Container */}
         <div className="relative">
-          {renderChart()}
+          {isLoading && !analyticsData && (
+            <div className="h-80 flex items-center justify-center">
+              <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                <RefreshCw className="h-5 w-5 animate-spin" />
+                <span>Loading analytics data...</span>
+              </div>
+            </div>
+          )}
+          
+          {error && !analyticsData ? (
+            <div className="h-80 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-red-600 dark:text-red-400 mb-2">Failed to load analytics data</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  {error instanceof Error ? error.message : 'An unknown error occurred'}
+                </p>
+                <button
+                  onClick={() => refetch()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          ) : null}
+          
+          {(!isLoading || analyticsData) && !error && renderChart()}
         </div>
 
         {/* Chart Statistics */}

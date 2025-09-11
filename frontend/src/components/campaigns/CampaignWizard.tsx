@@ -97,15 +97,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ isOpen, onClose }) => {
     
     createCampaignMutation.mutate(payload, {
       onSuccess: (createdCampaign) => {
- fix/campaign-wizard-bug
-        toast.success(`Campaign "${createdCampaign.nom_campagne}" created as draft.`);
-        setCampaignData(createdCampaign);
-        handleNext();
-      },
-      onError: (error: Error) => {
-        toast.error(`Failed to create campaign: ${error.message}`);
-      },
-
         console.log('Campaign created successfully:', createdCampaign);
         
         // Ensure we have the campaign ID before proceeding
@@ -118,29 +109,18 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ isOpen, onClose }) => {
           });
           
           // Store campaign ID in ref for immediate access
-          campaignIdRef.current = createdCampaign.id_campagne;
-          
-          // Update both state variables synchronously
-          setCreatedCampaign(createdCampaign);
           setCampaignData(updatedCampaignData);
-          
-          toast.success("Campaign created successfully!");
-          
-          // Use setTimeout to ensure state updates have propagated before moving to next step
-          setTimeout(() => {
-            console.log('Moving to step 2');
-            handleNext();
-          }, 100);
+          toast.success(`Campaign "${createdCampaign.nom_campagne}" created as draft.`);
+          handleNext();
         } else {
-          console.error('Campaign created but missing ID:', createdCampaign);
-          toast.error("Failed to create campaign. Please try again.");
+          console.error('Campaign creation response missing ID:', createdCampaign);
+          toast.error('Campaign created but missing ID. Please refresh the page.');
         }
       },
-      onError: (error) => {
-        console.error('Campaign creation failed:', error);
-        toast.error("Failed to create campaign. Please try again.");
-      }
- master
+      onError: (error: Error) => {
+        console.error('Campaign creation error:', error);
+        toast.error(`Failed to create campaign: ${error.message}`);
+      },
     });
   };
 
@@ -168,17 +148,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ isOpen, onClose }) => {
     }
     
     updateCampaignMutation.mutate(
- fix/campaign-wizard-bug
-      { id: campaignData.id_campagne, payload: { id_modele: campaignData.id_modele } },
-      {
-        onSuccess: (updatedCampaign) => {
-          toast.success(`Campaign "${updatedCampaign.nom_campagne}" updated.`);
-          handleNext();
-        },
-        onError: (error: Error) => {
-          toast.error(`Failed to update campaign: ${error.message}`);
-        },
-
       { id: campaignId, payload: { id_modele: templateId } },
       { 
         onSuccess: (updatedCampaign) => {
@@ -193,7 +162,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ isOpen, onClose }) => {
         onError: (error) => {
           toast.error("Failed to assign template. Please try again.");
         }
-        master
       }
     );
   };
@@ -279,7 +247,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
- fix/campaign-wizard-bug
         <div className="p-6 flex-1 overflow-y-auto">
           {/* Progress Bar Placeholder */}
 
@@ -308,137 +275,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ isOpen, onClose }) => {
           {step === 4 && (
               <CampaignLauncher campaign={campaignData} onLaunch={onClose} />
           )}
-
-        <div className="p-6 flex-1 overflow-y-auto">{/* Progress Bar */}
-        <div className="mb-6">
-          <div className="flex items-center">
-            {[1, 2, 3, 4].map((stepNumber) => (
-              <React.Fragment key={stepNumber}>
-                <div className={`
-                  flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium
-                  ${step >= stepNumber 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
-                  }
-                `}>
-                  {stepNumber}
-                </div>
-                {stepNumber < 4 && (
-                  <div className={`
-                    h-1 w-12 mx-2
-                    ${step > stepNumber ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}
-                  `} />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-           
-           {step === 1 && <CampaignForm onSubmit={handleStep1Submit} isSubmitting={createCampaignMutation.isLoading} />}
-           {step === 2 && (
-               <div>
-                 {(() => {
-                   const campaignId = campaignIdRef.current || campaignData.id_campagne || createdCampaign?.id_campagne;
-                   console.log('Step 2 campaign ID check:', {
-                     campaignId,
-                     refId: campaignIdRef.current,
-                     campaignDataId: campaignData.id_campagne,
-                     createdCampaignId: createdCampaign?.id_campagne,
-                     hasCampaignId: !!campaignId
-                   });
-                   
-                   if (!campaignId) {
-                     return (
-                       <div className="text-center py-8">
-                         <p className="text-red-500 mb-4">Campaign ID not found. Please go back to step 1.</p>
-                         <button 
-                           onClick={handleBack} 
-                           className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-                         >
-                           Go Back to Step 1
-                         </button>
-                       </div>
-                     );
-                   }
-                   
-                   return (
-                     <>
-                       <h3 className="font-medium mb-4 text-lg">2. Select a Template</h3>
-                       <TemplateGridSelector
-                         templates={templates || []}
-                         selectedTemplateId={campaignData.id_modele || null}
-                         onSelectTemplate={(templateId) => setCampaignData(prev => ({ ...prev, id_modele: Number(templateId) }))}
-                         isLoading={isLoadingTemplates}
-                       />
-                     </>
-                   );
-                 })()}
-               </div>
-           )}
-           {step === 3 && (
-               <div>
-                 {(() => {
-                   const campaignId = campaignIdRef.current || campaignData.id_campagne || createdCampaign?.id_campagne;
-                   if (!campaignId) {
-                     return (
-                       <div className="text-center py-8">
-                         <p className="text-red-500 mb-4">Campaign ID not found. Please go back to step 1.</p>
-                         <button 
-                           onClick={() => setStep(1)} 
-                           className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-                         >
-                           Go Back to Step 1
-                         </button>
-                       </div>
-                     );
-                   }
-                   
-                   return (
-                     <>
-                       <h3 className="font-medium mb-4 text-lg">3. Create a Mailing List</h3>
-                       <MailingListForm onSubmit={handleStep3Submit} isSubmitting={createMailingListMutation.isLoading} />
-                     </>
-                   );
-                 })()}
-               </div>
-           )}
-           {step === 4 && (
-               <div>
-                 {(() => {
-                   const campaignId = campaignIdRef.current || campaignData.id_campagne || createdCampaign?.id_campagne;
-                   if (!campaignId) {
-                     return (
-                       <div className="text-center py-8">
-                         <p className="text-red-500 mb-4">Campaign ID not found. Please go back to step 1.</p>
-                         <button 
-                           onClick={() => setStep(1)} 
-                           className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-                         >
-                           Go Back to Step 1
-                         </button>
-                       </div>
-                     );
-                   }
-                   
-                   return (
-                     <>
-                       <h3 className="font-medium mb-4 text-lg">4. Launch Campaign</h3>
-                       {(() => {
-                         const campaignForLauncher = createdCampaign || campaignData;
-                         console.log('Campaign data being passed to launcher:', campaignForLauncher);
-                         return (
-                           <CampaignLauncher 
-                             campaign={campaignForLauncher} 
-                             onLaunch={onClose} 
-                           />
-                         );
-                       })()}
-                     </>
-                   );
-                 })()}
-               </div>
-           )}
- master
         </div>
 
         {/* Footer */}
