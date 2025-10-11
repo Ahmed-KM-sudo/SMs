@@ -8,6 +8,9 @@ import ContactsPage from './pages/ContactsPage';
 import TemplatesPage from './pages/TemplatesPage';
 import AdminPage from './pages/AdminPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import MessageLogsPage from './pages/MessageLogsPage';
+import MessagesPage from './pages/MessagesPage';
+import SmsQueuePage from './pages/SmsQueuePage';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
@@ -85,6 +88,36 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <AdminPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/message-logs"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MessageLogsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MessagesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sms-queue"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SmsQueuePage />
                 </Layout>
               </ProtectedRoute>
             }

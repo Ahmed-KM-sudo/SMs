@@ -1,4 +1,3 @@
-import React from 'react';
 import React, { useState } from 'react';
 import TemplateLibrary from '../components/templates/TemplateLibrary';
 import TemplateEditor, { TemplateEditorHandles } from '../components/templates/TemplateEditor';
