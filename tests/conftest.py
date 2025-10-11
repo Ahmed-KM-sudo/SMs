@@ -20,6 +20,8 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.services import user_service
 from app.api.v1.schemas import user as user_schema
+from app.db.models import Agent
+from app.core.security import get_password_hash
 
 engine = create_engine(
     os.environ['DATABASE_URL'],
@@ -64,6 +66,11 @@ def admin_auth_headers(client: TestClient, db_session: Session):
     """
     Create an admin user for the test module and return auth headers.
     """
+    # Create a dummy admin user for the purpose of creating the test admin user
+    dummy_admin = Agent(id_agent=999, nom_agent="Dummy Admin", identifiant="dummy_admin", role="admin", mot_de_passe=get_password_hash("dummy_password"))
+    db_session.add(dummy_admin)
+    db_session.commit()
+
     admin_user = user_service.create_user(
         db_session,
         user_schema.UserCreate(
@@ -73,6 +80,7 @@ def admin_auth_headers(client: TestClient, db_session: Session):
             password="adminpassword",
             is_active=True,
         ),
+        current_admin=dummy_admin
     )
 
     response = client.post(

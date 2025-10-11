@@ -72,15 +72,17 @@ def test_update_user(client: TestClient, db_session: Session, admin_auth_headers
 
 def test_delete_user(client: TestClient, db_session: Session, admin_auth_headers: dict):
     # Create a user to delete
+    admin_user = user_service.get_user_by_username(db_session, "admin_test")
     user_to_delete = user_service.create_user(
-        db_session,
-        user_schema.UserCreate(
+        db=db_session,
+        user=user_schema.UserCreate(
             nom_agent="User To Delete",
             identifiant="deleteme",
             role="agent",
             password="password",
             is_active=True,
         ),
+        current_admin=admin_user,
     )
 
     response = client.delete(f"/users/{user_to_delete.id_agent}", headers=admin_auth_headers)
