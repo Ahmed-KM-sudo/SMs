@@ -1,4 +1,3 @@
-import React from 'react';
 import React, { useState, useEffect } from 'react';
 import { Contact } from '../../services/contactApi';
 import { format } from 'date-fns';

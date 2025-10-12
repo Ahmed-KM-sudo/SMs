@@ -3,10 +3,17 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.schemas import user as user_schema
 from app.services import user_service
+from app.db.models import Agent
+from app.core.security import get_password_hash
 
 def test_login(client: TestClient, db_session: Session):
     # Create a test user in the test database
     password = "testpassword"
+    # Create a dummy admin user for the purpose of creating the test user
+    dummy_admin = Agent(id_agent=999, nom_agent="Dummy Admin", identifiant="dummy_admin", role="admin", mot_de_passe=get_password_hash("dummy_password"))
+    db_session.add(dummy_admin)
+    db_session.commit()
+
     user_service.create_user(
         db_session,
         user_schema.UserCreate(
@@ -16,6 +23,7 @@ def test_login(client: TestClient, db_session: Session):
             password=password,
             is_active=True,
         ),
+        current_admin=dummy_admin
     )
 
     # Test successful login

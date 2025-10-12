@@ -13,7 +13,7 @@ from app.db.session import get_db
 from app.api.v1.schemas.auth import TokenData
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=True)
 
 ALGORITHM = "HS256"
 
@@ -38,7 +38,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    # Truncate password to 72 bytes to avoid a bug in the underlying bcrypt library.
+    # This is a workaround for a known issue with passlib and bcrypt.
+    # See: https://github.com/pyca/bcrypt/issues/684
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+    return pwd_context.hash(password_bytes)
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(

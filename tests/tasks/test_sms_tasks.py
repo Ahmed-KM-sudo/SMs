@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 from sqlalchemy.orm import Session
-from app.tasks.sms_tasks import process_sms_queue, send_scheduled_campaigns
+from app.tasks.sms_tasks import process_sms_batch, send_scheduled_campaigns
 from app.db.models import Campaign, Contact, MailingList, SMSQueue, Message
 from datetime import datetime, timedelta, timezone
 
@@ -52,7 +52,7 @@ def test_process_sms_queue_success(MockTwilioProvider, MockSessionLocal, db_sess
     queue_item_id = queue_item.id
 
     # --- Execute ---
-    process_sms_queue()
+    process_sms_batch()
 
     # --- Assert ---
     processed_item = db_session.get(SMSQueue, queue_item_id)
@@ -87,7 +87,7 @@ def test_process_sms_queue_failure_and_retry(MockTwilioProvider, MockSessionLoca
     queue_item_id = queue_item.id
 
     # --- Execute ---
-    process_sms_queue()
+    process_sms_batch()
 
     # --- Assert ---
     processed_item = db_session.get(SMSQueue, queue_item_id)
@@ -124,7 +124,7 @@ def test_process_sms_queue_respects_rate_limit(MockTwilioProvider, MockSessionLo
     db_session.commit()
 
     # --- Execute ---
-    process_sms_queue()
+    process_sms_batch()
 
     # --- Assert ---
     # Verify that send_sms was called exactly 5 times, respecting the rate limit

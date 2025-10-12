@@ -40,6 +40,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <NavItem to="/contacts" icon={<Users size={20} />}>Contacts</NavItem>
           <NavItem to="/templates" icon={<FileText size={20} />}>Templates</NavItem>
           <NavItem to="/mailing-lists" icon={<List size={20} />}>Mailing Lists</NavItem>
+          <NavItem to="/messages" icon={<MessageSquare size={20} />}>Messages</NavItem>
+          <NavItem to="/message-logs" icon={<Monitor size={20} />}>Message Logs</NavItem>
+          <NavItem to="/sms-queue" icon={<List size={20} />}>SMS Queue</NavItem>
           {/* Add more navigation items here */}
         </nav>
         <div className="p-4 border-t dark:border-gray-700">

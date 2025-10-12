@@ -24,7 +24,7 @@ def test_twilio_webhook_updates_status_delivered(client: TestClient, db_session:
 
     # --- Execute ---
     response = client.post(
-        "/api/v1/sms-webhooks/twilio-status",
+            "/webhooks/twilio-status",
         data={"MessageSid": "SMwebhookdelivered", "MessageStatus": "delivered", "Price": "-0.0075"},
     )
 
@@ -55,7 +55,7 @@ def test_twilio_webhook_updates_status_failed(client: TestClient, db_session: Se
 
     # --- Execute ---
     response = client.post(
-        "/api/v1/sms-webhooks/twilio-status",
+            "/webhooks/twilio-status",
         data={"MessageSid": "SMwebhookfailed", "MessageStatus": "failed", "ErrorMessage": "30005-Message-Delivery-Unknown-error"},
     )
 
