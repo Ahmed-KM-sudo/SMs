@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session
-from app.db.models import Message
+from app.db.models import Message, MessageLog
+
+def get_message_logs(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(MessageLog).offset(skip).limit(limit).all()
 
 def get_message(db: Session, message_id: int):
     return db.query(Message).filter(Message.id_message == message_id).first()

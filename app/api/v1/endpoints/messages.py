@@ -68,3 +68,16 @@ def resend_message(
     if resent_message is None:
         raise HTTPException(status_code=404, detail="Message not found")
     return resent_message
+
+@router.get("/logs", response_model=List[message_schema.MessageLog])
+def read_message_logs(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: Agent = Depends(get_current_user),
+):
+    """
+    Retrieve message logs.
+    """
+    logs = message_service.get_message_logs(db, skip=skip, limit=limit)
+    return logs
