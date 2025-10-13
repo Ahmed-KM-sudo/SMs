@@ -22,3 +22,16 @@ class MessageInDBBase(MessageBase):
 
 class Message(MessageInDBBase):
     pass
+
+class MessageLogBase(BaseModel):
+    id_message: int
+    log_time: datetime
+    statut_message: str
+    notes: Optional[str] = None
+
+class MessageLogInDBBase(MessageLogBase):
+    id_log: int
+    model_config = ConfigDict(from_attributes=True)
+
+class MessageLog(MessageLogInDBBase):
+    pass

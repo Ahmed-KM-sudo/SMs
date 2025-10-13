@@ -1,35 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { getTemplates, createTemplate, updateTemplate, Template } from '../services/templateApi';
-import toast from 'react-hot-toast';
-
-const TEMPLATES_QUERY_KEY = 'templates';
+import { api } from '../services/api';
+import { MessageTemplate } from '../types';
 
 export const useTemplates = () => {
-  return useQuery<Template[], Error>(TEMPLATES_QUERY_KEY, getTemplates);
+  return useQuery<MessageTemplate[], Error>('templates', async () => {
+    const response = await api.get('/templates');
+    return response.data;
+  });
 };
 
 export const useCreateTemplate = () => {
   const queryClient = useQueryClient();
-  return useMutation(createTemplate, {
+  return useMutation((newTemplate: Omit<MessageTemplate, 'id_template'>) => api.post('/templates', newTemplate), {
     onSuccess: () => {
-      queryClient.invalidateQueries(TEMPLATES_QUERY_KEY);
-      toast.success('Template created successfully!');
+      queryClient.invalidateQueries('templates');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to create template: ${error.message}`);
-    }
-  });
-};
-
-export const useUpdateTemplate = () => {
-  const queryClient = useQueryClient();
-  return useMutation(updateTemplate, {
-    onSuccess: () => {
-      queryClient.invalidateQueries(TEMPLATES_QUERY_KEY);
-      toast.success('Template updated successfully!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update template: ${error.message}`);
-    }
   });
 };
