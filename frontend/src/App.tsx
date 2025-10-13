@@ -122,6 +122,36 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/message-logs"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MessageLogsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MessagesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sms-queue"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SmsQueuePage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           {/* Redirect from root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
