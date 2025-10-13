@@ -25,7 +25,7 @@ def get_user_by_username(db: Session, username: str):
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Agent).offset(skip).limit(limit).all()
 
-def update_user(db: Session, user_id: int, user: UserUpdate, current_admin: Agent):
+def update_user(db: Session, user_id: int, user: UserUpdate):
     db_user = get_user(db, user_id)
     if db_user:
         update_data = user.model_dump(exclude_unset=True)
@@ -37,13 +37,11 @@ def update_user(db: Session, user_id: int, user: UserUpdate, current_admin: Agen
 
         db.commit()
         db.refresh(db_user)
-        AuditService.log_activity(db, user=current_admin, action="update_user", table_affected="agents", record_id=db_user.id_agent)
     return db_user
 
-def delete_user(db: Session, user_id: int, current_admin: Agent):
+def delete_user(db: Session, user_id: int):
     db_user = get_user(db, user_id)
     if db_user:
-        AuditService.log_activity(db, user=current_admin, action="delete_user", table_affected="agents", record_id=db_user.id_agent)
         db.delete(db_user)
         db.commit()
     return db_user

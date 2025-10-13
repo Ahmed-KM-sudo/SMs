@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Contact } from '../../services/contactApi';
+import { Contact } from '../../types';
 import { format } from 'date-fns';
 import { MoreVertical, CheckCircle, XCircle } from 'lucide-react';
 

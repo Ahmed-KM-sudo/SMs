@@ -164,6 +164,16 @@ class SMSQueue(Base):
     contact = relationship("Contact")
 
 
+class MessageLog(Base):
+    __tablename__ = 'message_logs'
+    id_log = Column(Integer, primary_key=True)
+    id_message = Column(Integer, ForeignKey('messages.id_message'), nullable=False)
+    log_time = Column(TIMESTAMP, default=func.now())
+    statut_message = Column(String(50), nullable=False)
+    notes = Column(TEXT)
+
+    message = relationship("Message")
+
 class ActivityLog(Base):
     __tablename__ = 'activity_logs'
     id_log = Column(Integer, primary_key=True)
