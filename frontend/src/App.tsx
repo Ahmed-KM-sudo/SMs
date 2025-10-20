@@ -13,6 +13,7 @@ import AdminPage from './pages/AdminPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import MailingListsPage from './pages/MailingListsPage';
 import SettingsPage from './pages/SettingsPage';
+// import QueuePage from './pages/QueuePage';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
@@ -136,6 +137,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* <Route
+            path="/queue"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <QueuePage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          /> */}
           {/* Redirect from root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>

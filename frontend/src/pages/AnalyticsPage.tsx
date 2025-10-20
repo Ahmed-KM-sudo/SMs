@@ -1,6 +1,5 @@
 import React from 'react';
 import AdvancedDashboard from '../components/analytics/AdvancedDashboard';
-import CustomReportBuilder from '../components/analytics/CustomReportBuilder';
 
 const AnalyticsPage: React.FC = () => {
   return (
@@ -10,7 +9,6 @@ const AnalyticsPage: React.FC = () => {
         <p className="text-gray-500">An overview of campaign performance and trends.</p>
       </div>
       <AdvancedDashboard />
-      <CustomReportBuilder />
     </div>
   );
 };

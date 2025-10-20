@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,7 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  
   const {
     register,
     handleSubmit,
@@ -106,9 +107,6 @@ const LoginForm: React.FC = () => {
               </label>
             </div>
           </div>
-          <a href="#" className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500">
-            Forgot password?
-          </a>
         </div>
         <button
           type="submit"

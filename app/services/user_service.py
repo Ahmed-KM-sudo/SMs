@@ -43,8 +43,13 @@ def update_user(db: Session, user_id: int, user: UserUpdate):
     return db_user
 
 def delete_user(db: Session, user_id: int):
+    from app.db.models import Campaign
     db_user = get_user(db, user_id)
     if db_user:
+        # Delete all campaigns owned by this user
+        user_campaigns = db.query(Campaign).filter(Campaign.id_agent == user_id).all()
+        for campaign in user_campaigns:
+            db.delete(campaign)
         db.delete(db_user)
         db.commit()
     return db_user

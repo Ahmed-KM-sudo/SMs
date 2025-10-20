@@ -98,6 +98,24 @@ const CampaignDetailPage: React.FC = () => {
       toast.error('Only draft campaigns can be launched');
       return;
     }
+
+    // Check requirements and show warning but allow user to proceed
+    const missingRequirements = [];
+    if (!campaign.id_modele) {
+      missingRequirements.push('Message template');
+    }
+    if (campaignMailingLists.length === 0) {
+      missingRequirements.push('Mailing lists');
+    }
+
+    if (missingRequirements.length > 0) {
+      const requirements = missingRequirements.join(' and ');
+      const confirmMessage = `This campaign is missing: ${requirements}.\n\nDo you want to proceed anyway? The system will validate all requirements and provide specific guidance if needed.`;
+      
+      if (!window.confirm(confirmMessage)) {
+        return;
+      }
+    }
     
     launchCampaignMutation.mutate(campaign.id_campagne, {
       onSuccess: () => {
@@ -105,7 +123,17 @@ const CampaignDetailPage: React.FC = () => {
       },
       onError: (error: any) => {
         const errorMessage = error.response?.data?.detail || error.message || 'Failed to launch campaign';
-        toast.error(errorMessage);
+
+        // Provide specific guidance based on the error
+        if (errorMessage.includes('template')) {
+          toast.error('❌ Campaign launch failed: Please assign a message template to this campaign before launching.');
+        } else if (errorMessage.includes('mailing list')) {
+          toast.error('❌ Campaign launch failed: Please assign at least one mailing list to this campaign before launching.');
+        } else if (errorMessage.includes('No valid contacts')) {
+          toast.error('❌ Campaign launch failed: No valid recipients found. Please check that your mailing lists contain opted-in contacts with valid phone numbers.');
+        } else {
+          toast.error(`❌ Launch failed: ${errorMessage}`);
+        }
       }
     });
   };
@@ -158,14 +186,21 @@ const CampaignDetailPage: React.FC = () => {
             <div className="flex items-center space-x-3">
               {/* Action Buttons */}
               {campaign.statut === 'draft' && (
-                <button
-                  onClick={handleLaunch}
-                  disabled={launchCampaignMutation.isLoading}
-                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  {launchCampaignMutation.isLoading ? 'Launching...' : 'Launch Campaign'}
-                </button>
+                <>
+                  <button
+                    onClick={handleLaunch}
+                    disabled={launchCampaignMutation.isLoading}
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    {launchCampaignMutation.isLoading ? 'Launching...' : 'Launch Campaign'}
+                  </button>
+                  {(!campaign.id_modele || campaignMailingLists.length === 0) && (
+                    <span className="text-sm text-amber-600 font-medium">
+                      Missing requirements - see details below
+                    </span>
+                  )}
+                </>
               )}
               
               {campaign.statut === 'active' && (
@@ -297,10 +332,62 @@ const CampaignDetailPage: React.FC = () => {
                       <span className="font-medium">{format(new Date(campaign.created_at || new Date()), 'PPP')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Template ID:</span>
-                      <span className="font-medium">{campaign.id_modele || 'Not assigned'}</span>
+                      <span className="text-gray-600">Template:</span>
+                      <span className={`font-medium ${campaign.id_modele ? 'text-green-600' : 'text-red-600'}`}>
+                        {campaign.id_modele ? `Template #${campaign.id_modele}` : 'Not assigned'}
+                      </span>
                     </div>
                   </div>
+                  
+                  {/* Launch Requirements Check */}
+                  {campaign.statut === 'draft' && (
+                    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <h4 className="text-sm font-medium text-amber-800 mb-2">Launch Requirements</h4>
+                      <ul className="space-y-1 text-sm">
+                        <li className={`flex items-center ${campaign.id_modele ? 'text-green-600' : 'text-red-600'}`}>
+                          {campaign.id_modele ? (
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4 mr-2" />
+                          )}
+                          Message template {campaign.id_modele ? 'assigned' : 'required'}
+                        </li>
+                        <li className={`flex items-center ${campaignMailingLists.length > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {campaignMailingLists.length > 0 ? (
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4 mr-2" />
+                          )}
+                          Mailing lists {campaignMailingLists.length > 0 ? 'assigned' : 'required'}
+                        </li>
+                      </ul>
+                      {(!campaign.id_modele || campaignMailingLists.length === 0) && (
+                        <div className="mt-3 space-y-2">
+                          <p className="text-xs text-amber-700">
+                            Please assign the missing requirements before launching this campaign.
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {!campaign.id_modele && (
+                              <button
+                                onClick={() => navigate('/templates')}
+                                className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                              >
+                                Go to Templates
+                              </button>
+                            )}
+                            {campaignMailingLists.length === 0 && (
+                              <button
+                                onClick={() => navigate('/mailing-lists')}
+                                className="text-xs px-3 py-1 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
+                              >
+                                Go to Mailing Lists
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
